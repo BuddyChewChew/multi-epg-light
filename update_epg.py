@@ -4,6 +4,12 @@ import re
 import xml.etree.ElementTree as ET
 import requests
 
+try:
+    from lxml import etree as lxml_etree
+    HAS_LXML = True
+except ImportError:
+    HAS_LXML = False
+
 # Settings
 NAME = "light"
 # Get URL from GitHub Secret
@@ -70,6 +76,34 @@ def get_tvg_ids_from_remote_m3u():
         print(f"Error fetching M3U: {e}")
         return None
 
+def sanitize_xml_bytes(content):
+    """Strip bytes that are illegal in XML 1.0 but keep valid whitespace."""
+    return re.sub(rb'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]', b'', content)
+
+def parse_xml(content, url):
+    """Try strict stdlib parse first, fall back to lxml recovery, then sanitize + retry."""
+    # 1. Fast path: strict stdlib parse
+    try:
+        return ET.fromstring(content)
+    except ET.ParseError:
+        pass
+
+    # 2. lxml with recover=True (handles most real-world malformed EPGs)
+    if HAS_LXML:
+        try:
+            root_lxml = lxml_etree.fromstring(content, parser=lxml_etree.XMLParser(recover=True))
+            # Convert lxml element back to stdlib ET so the rest of the script is unchanged
+            return ET.fromstring(lxml_etree.tostring(root_lxml))
+        except Exception:
+            pass
+
+    # 3. Strip illegal control characters and retry stdlib
+    try:
+        return ET.fromstring(sanitize_xml_bytes(content))
+    except ET.ParseError as e:
+        print(f"  ! Error: {e}")
+        return None
+
 def fetch_and_parse(url):
     try:
         print(f"Fetching EPG: {url.split('/')[-1]}")
@@ -78,7 +112,7 @@ def fetch_and_parse(url):
         content = response.content
         if url.endswith('.gz'):
             content = gzip.decompress(content)
-        return ET.fromstring(content)
+        return parse_xml(content, url)
     except Exception as e:
         print(f"  ! Error: {e}")
         return None
