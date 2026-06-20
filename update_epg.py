@@ -37,6 +37,7 @@ URLS = [
     'https://epgshare01.online/epgshare01/epg_ripper_IT1.xml.gz',
     'https://epgshare01.online/epgshare01/epg_ripper_US_SPORTS1.xml.gz',
     'https://epgshare01.online/epgshare01/epg_ripper_FANDUEL1.xml.gz',
+    'https://raw.githubusercontent.com/BuddyChewChew/My-Streams/refs/heads/main/Backup/epg.xml',
     'https://raw.githubusercontent.com/BuddyChewChew/whiplash-epg/main/epg.xml',
     'https://github.com/BuddyChewChew/tcl-playlist-generator/raw/refs/heads/main/tcl_epg.xml',
     'https://github.com/matthuisman/i.mjh.nz/raw/refs/heads/master/nzau/epg.xml.gz',
